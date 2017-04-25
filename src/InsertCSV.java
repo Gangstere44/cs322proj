@@ -1,37 +1,61 @@
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 
-public class ParseAndInsertCSV {
+public class InsertCSV {
 
+	private final String PARSED_PATH;
 	private final String INPUT_FILE_TYPE = ".csv";
-
-	private final String PATH_TO_PARSE = "comicsInitData/";
-	// private final String PARSED_PATH = "comicsParsedData/";
-
-	private final Connection conn;
-
-	public ParseAndInsertCSV(Connection connToDB) {
-
-		this.conn = connToDB;
-
+	
+	private final String DB_NAME = "IntroDBProject";
+	
+	// Database credentials
+	private final String USER = "root";
+	private final String PASS = "1234";
+	
+	// JDBC driver name and database URL
+	private final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+	private final String DB_URL = "jdbc:mysql://localhost/" + DB_NAME;
+	
+	private Connection conn;
+	
+	public InsertCSV(String parsedPath) {
+		
+		PARSED_PATH = parsedPath;
+		
 		try {
-			parseAndInsertStoryType();
-		} catch (SQLException | IOException e) {
-			// TODO Auto-generated catch block
+			// STEP 2: Register JDBC driver
+			Class.forName("com.mysql.jdbc.Driver");
+
+			// STEP 3: Open a connection
+			System.out.println("Connecting to database...");
+			conn = DriverManager.getConnection(DB_URL, USER, PASS);
+			
+			conn.close();
+		} catch (SQLException se) {
+			// Handle errors for JDBC
+			se.printStackTrace();
+		} catch (Exception e) {
+			// Handle errors for Class.forName
 			e.printStackTrace();
 		}
-	};
-
+	
+		
+	}
+	
+	public void insertCSV() {
+		
+	}
+	
 	private boolean tableExist(String tableName) {
 
 		boolean exist = false;
@@ -62,8 +86,8 @@ public class ParseAndInsertCSV {
 		stmt.executeUpdate("delete from " + tableName + ";");
 		stmt.close();
 	}
-
-	private void parseAndInsertStoryType() throws SQLException, IOException {
+	
+	private void InsertStoryType() throws SQLException, IOException {
 
 		final String TABLE_NAME = "story_type";
 		final String ARGS = "(id int, name varchar(100), primary key (id)";
@@ -78,7 +102,7 @@ public class ParseAndInsertCSV {
 		StringBuilder sqlQuery = new StringBuilder();
 
 		BufferedReader stream = new BufferedReader(
-				new InputStreamReader(new FileInputStream(PATH_TO_PARSE + TABLE_NAME + INPUT_FILE_TYPE)));
+				new InputStreamReader(new FileInputStream(PARSED_PATH + TABLE_NAME + INPUT_FILE_TYPE)));
 
 		System.out.println("Start inserting in " + TABLE_NAME);
 
