@@ -181,11 +181,13 @@ public class ParseCSV {
 						String data = allData[i];
 						if (data.length() == 0 && newRelationInfo == null) {
 							mainWriter.write(delimiter + NULL);
+							delimiter = ",";
 						} 
-						else {
+						else if (data.length() > 0) {
 							if (newRelationInfo == null) {
 								// Normal column
 								mainWriter.write(delimiter + data);
+								delimiter = ",";
 								if (header.equals("id")) {
 									storyId = Integer.parseInt(data);
 								}
@@ -195,7 +197,6 @@ public class ParseCSV {
 								newRelationInfo.addNewElements(data, storyId);
 							}
 						}
-						delimiter = ",";
 					}
 					mainWriter.write('\n');
 				}
@@ -266,12 +267,14 @@ public class ParseCSV {
 		public void addNewElements(String data, int id) throws IOException {
 			String[] elements = Utils.splitAndClean(data, ";");
 			for (String elem : elements) {
-				Integer relationId = elemToId.get(elem);
-				if (relationId == null) {
-					relationId = elemToId.size();
-					elemToId.put(elem, relationId);
+				if (elem.length() > 0) {
+					Integer relationId = elemToId.get(elem);
+					if (relationId == null) {
+						relationId = elemToId.size();
+						elemToId.put(elem, relationId);
+					}
+					writer.write(id + "," + relationId + '\n');
 				}
-				writer.write(id + "," + relationId + '\n');
 			}
 		}
 
