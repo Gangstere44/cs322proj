@@ -5,7 +5,7 @@ import java.io.OutputStreamWriter;
 
 public class Utils {
 	
-	public static String[] splitAndClean(String toSplit, String delimiter) {
+	public static String[] splitAndTrim(String toSplit, String delimiter) {
 		String[] splitted = toSplit.split(delimiter);
 		String[] toReturn = new String[splitted.length];
 
