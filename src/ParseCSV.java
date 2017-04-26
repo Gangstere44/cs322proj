@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,19 +9,21 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ParseCSV {
-	
+
 	private static final String NULL = "NULL";
-	
+
 	// New Entity tables
 	private static final String CHARACTERS = "characters";
 	private static final String ARTISTS = "artists";
 	private static final String EDITORS = "editors";
 	private static final String GENRES = "genres";
-	
+
 	// Relational tables (so files) needed for Story
 	private static final String STORY_TO_FEATURE = "story_to_feature";
 	private static final String STORY_TO_SCRIPT = "story_to_script";
@@ -31,7 +34,7 @@ public class ParseCSV {
 	private static final String STORY_TO_EDITING = "story_to_editing";
 	private static final String STORY_TO_GENRE = "story_to_genre";
 	private static final String STORY_TO_CHARACTERS = "story_to_characters";
-	
+
 	private final String pathToParse;
 	private final String parsedPath;
 	private final String fileType;
@@ -83,7 +86,7 @@ public class ParseCSV {
 				break;
 			}
 		}
-		
+
 		// Write new entity tables
 		writeEntityTable(this.characters, CHARACTERS);
 		writeEntityTable(this.artists, ARTISTS);
@@ -100,102 +103,96 @@ public class ParseCSV {
 		for (Map.Entry<String, Integer> entry : entity.entrySet()) {
 			writer.write(entry.getValue() + "," + entry.getKey() + '\n');
 		}
-		
+
 		writer.close();
 	}
 
 	private void parseStory(String name) throws IOException {
-		
-		// Don't use StringBuilder to avoid OutOfMemoryError (Java heap space too small sometimes)
-		BufferedWriter mainWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + name + this.fileType)));
-		BufferedWriter storyToFeatureWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_FEATURE + this.fileType)));
-		BufferedWriter storyToScriptWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_SCRIPT + this.fileType)));
-		BufferedWriter storyToPencilsWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_PENCILS + this.fileType)));
-		BufferedWriter storyToInksWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_INKS + this.fileType)));
-		BufferedWriter storyToColorsWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_COLORS + this.fileType)));
-		BufferedWriter storyToLettersWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_LETTERS + this.fileType)));
-		BufferedWriter storyToEditingWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_EDITING + this.fileType)));
-		BufferedWriter storyToGenreWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_GENRE + this.fileType)));
-		BufferedWriter storyToCharactersWriter = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(this.parsedPath + STORY_TO_CHARACTERS + this.fileType)));
 
-		// Add headers to relational StringBuilder
-		storyToFeatureWriter.write("story_id,character_id\n");
-		storyToScriptWriter.write("story_id,artist_id\n");
-		storyToPencilsWriter.write("story_id,artist_id\n");
-		storyToInksWriter.write("story_id,artist_id\n");
-		storyToColorsWriter.write("story_id,artist_id\n");
-		storyToLettersWriter.write("story_id,artist_id\n");
-		storyToEditingWriter.write("story_id,editor_id\n");
-		storyToGenreWriter.write("story_id,genre_id\n");
-		storyToCharactersWriter.write("story_id,character_id\n");
+		// Store which columns will create a new Relation (table) and thus will
+		// be removed from the "Story" one
+		Set<String> newRelationColumns = new HashSet<>(Arrays.asList(new String[] { "feature", "script", "pencils",
+				"inks", "colors", "letters", "editing", "genre", "characters" }));
+
+		/*
+		 * Store all information about the new Relations that are about to be
+		 * created
+		 */
+
+		// Don't use StringBuilder to avoid OutOfMemoryError (Java heap space
+		// too small sometimes), directly use BufferedReader instead
+
+		Map<String, NewRelationInfo> headersToNewRelations = new HashMap<>();
+
+		headersToNewRelations.put("feature",
+				new NewRelationInfo(this.characters, newWriter(STORY_TO_FEATURE), "story_id,character_id"));
+		headersToNewRelations.put("script",
+				new NewRelationInfo(this.artists, newWriter(STORY_TO_SCRIPT), "story_id,artist_id"));
+		headersToNewRelations.put("pencils",
+				new NewRelationInfo(this.artists, newWriter(STORY_TO_PENCILS), "story_id,artist_id"));
+		headersToNewRelations.put("inks",
+				new NewRelationInfo(this.artists, newWriter(STORY_TO_INKS), "story_id,artist_id"));
+		headersToNewRelations.put("colors",
+				new NewRelationInfo(this.artists, newWriter(STORY_TO_COLORS), "story_id,artist_id"));
+		headersToNewRelations.put("letters",
+				new NewRelationInfo(this.artists, newWriter(STORY_TO_LETTERS), "story_id,artist_id"));
+		headersToNewRelations.put("editing",
+				new NewRelationInfo(this.editors, newWriter(STORY_TO_EDITING), "story_id,editor_id"));
+		headersToNewRelations.put("genre",
+				new NewRelationInfo(this.genres, newWriter(STORY_TO_GENRE), "story_id,genre_id"));
+		headersToNewRelations.put("characters",
+				new NewRelationInfo(this.characters, newWriter(STORY_TO_CHARACTERS), "story_id,character_id"));
+
+		// Write headers for new relations
+		for (NewRelationInfo newRelationInfo : headersToNewRelations.values()) {
+			newRelationInfo.writer.write(newRelationInfo.newRelationHeader + '\n');
+		}
+		
+		// Create main writer (the one writing the same file than the one read, but in parsed directory)
+		BufferedWriter mainWriter = newWriter(name);
 
 		try (BufferedReader br = new BufferedReader(
 				new FileReader(new File(this.pathToParse + name + this.fileType)))) {
-			boolean header = true;
+			boolean isHeader = true;
 			List<String> headers = new ArrayList<>();
 			String line;
 			while ((line = br.readLine()) != null) {
-				String[] allData = splitAndClean(line, ",");
-				if (header) {
+				String[] allData = Utils.splitAndClean(line, ",");
+				if (isHeader) {
+					// Header
 					headers = Arrays.asList(allData);
-					mainWriter.write(line + '\n');
-					header = false;
+					String delimiter = "";
+					for (String data : allData) {
+						if (!newRelationColumns.contains(data)) {
+							mainWriter.write(delimiter + data);
+							delimiter = ",";
+						}
+					}
+					mainWriter.write('\n');
+					isHeader = false;
 				}
-				// Normal data
 				else {
+					// Normal data
 					String delimiter = "";
 					int storyId = -1;
 					for (int i = 0; i < allData.length; i++) {
+						String header = headers.get(i);
+						NewRelationInfo newRelationInfo = headersToNewRelations.get(header);
 						String data = allData[i];
-						if (data.length() == 0) {
+						if (data.length() == 0 && newRelationInfo == null) {
 							mainWriter.write(delimiter + NULL);
-						}
+						} 
 						else {
-							switch (headers.get(i)) {
-								case "id":
+							if (newRelationInfo == null) {
+								// Normal column
+								mainWriter.write(delimiter + data);
+								if (header.equals("id")) {
 									storyId = Integer.parseInt(data);
-									mainWriter.write(delimiter + data);
-									break;
-								case "feature":
-									addNewElementsToRelation(data, this.characters, storyId, storyToFeatureWriter);
-									break;
-								case "script":
-									addNewElementsToRelation(data, this.artists, storyId, storyToScriptWriter);
-									break;
-								case "pencils":
-									addNewElementsToRelation(data, this.artists, storyId, storyToPencilsWriter);
-									break;
-								case "inks":
-									addNewElementsToRelation(data, this.artists, storyId, storyToInksWriter);
-									break;
-								case "colors":
-									addNewElementsToRelation(data, this.artists, storyId, storyToColorsWriter);
-									break;
-								case "letters":
-									addNewElementsToRelation(data, this.artists, storyId, storyToLettersWriter);
-									break;
-								case "editing":
-									addNewElementsToRelation(data, this.editors, storyId, storyToEditingWriter);
-									break;
-								case "genre":
-									addNewElementsToRelation(data, this.genres, storyId, storyToGenreWriter);
-									break;
-								case "characters":
-									addNewElementsToRelation(data, this.characters, storyId, storyToCharactersWriter);
-									break;
-								default:
-									mainWriter.write(delimiter + data);
-									break;
+								}
+							}
+							else {
+								// Column that will collapse and create a new Relation
+								newRelationInfo.addNewElements(data, storyId);
 							}
 						}
 						delimiter = ",";
@@ -204,26 +201,19 @@ public class ParseCSV {
 				}
 			}
 		}
-		
-		/*
-		// Write to all files what we stored in their StringBuilder
-		writeToFile(this.parsedPath + name + this.fileType, mainStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_FEATURE + this.fileType, storyToFeatureStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_SCRIPT + this.fileType, storyToScriptStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_PENCILS + this.fileType, storyToPencilsStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_INKS + this.fileType, storyToInksStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_COLORS + this.fileType, storyToColorsStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_LETTERS + this.fileType, storyToLettersStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_EDITING + this.fileType, storyToEditingStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_GENRE + this.fileType, storyToGenreStrB.toString());
-		writeToFile(this.parsedPath + STORY_TO_CHARACTERS + this.fileType, storyToCharactersStrB.toString());
-		*/
+
+		// Close writers
+		mainWriter.close();
+		for (NewRelationInfo newRelationInfo : headersToNewRelations.values()) {
+			newRelationInfo.writer.close();
+		}
 	}
-	
+
 	private void parseDefault(String name) throws IOException {
 
 		// Use StringBuilder to avoid writing too many times
 		StringBuilder strB = new StringBuilder();
+		BufferedWriter writer = newWriter(name);
 
 		try (BufferedReader br = new BufferedReader(
 				new FileReader(new File(this.pathToParse + name + this.fileType)))) {
@@ -232,62 +222,59 @@ public class ParseCSV {
 			while ((line = br.readLine()) != null) {
 
 				if (header) {
-					strB.append(line + '\n');
+					writer.write(line + '\n');
 					header = false;
 				}
 				// Normal data
 				else {
-					String[] allData = splitAndClean(line, ",");
+					String[] allData = Utils.splitAndClean(line, ",");
 					String delimiter = "";
 					for (String data : allData) {
 						if (data.length() == 0) {
 							data = NULL;
 						}
-						strB.append(delimiter + data);
+						writer.write(delimiter + data);
 						delimiter = ",";
 					}
-					strB.append('\n');
+					writer.write('\n');
 				}
 			}
 		}
 
-		writeToFile(this.parsedPath + name + this.fileType, strB.toString());
-		
-	}
-	
-	private void writeToFile(String fileName, String toWrite) throws IOException {
-		BufferedWriter writer = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(fileName)));
-
-		writer.write(toWrite);
-
 		writer.close();
-		
-		System.out.println("Wrote file: '" + fileName + "'.");
+
 	}
 
-	// Add some elements (if new) to a relation an put it in the given StringBuilder
-	private void addNewElementsToRelation(String data, Map<String, Integer> relation, int id, BufferedWriter writer) throws IOException {
-		String[] elements = splitAndClean(data, ";");
-		for (String elem : elements) {
-			Integer relationId = relation.get(elem);
-			if (relationId == null) {
-				relationId = relation.size();
-				relation.put(elem, relationId);
+	private BufferedWriter newWriter(String name) throws FileNotFoundException {
+		return Utils.newWriter(this.parsedPath, name, this.fileType);
+	}
+
+	// Store information about a new relation that needs to be created
+	static class NewRelationInfo {
+
+		public Map<String, Integer> elemToId;
+		public BufferedWriter writer;
+		public String newRelationHeader;
+
+		public NewRelationInfo(Map<String, Integer> elemToId, BufferedWriter writer, String newRelationHeader) {
+			this.elemToId = elemToId;
+			this.writer = writer;
+			this.newRelationHeader = newRelationHeader;
+		}
+		
+		// Add some elements (if new) to a relation and write it
+		public void addNewElements(String data, int id) throws IOException {
+			String[] elements = Utils.splitAndClean(data, ";");
+			for (String elem : elements) {
+				Integer relationId = elemToId.get(elem);
+				if (relationId == null) {
+					relationId = elemToId.size();
+					elemToId.put(elem, relationId);
+				}
+				writer.write(id + "," + relationId + '\n');
 			}
-			writer.write(id + "," + relationId + '\n');
 		}
-	}
 
-	private String[] splitAndClean(String toSplit, String delimiter) {
-		String[] splitted = toSplit.split(delimiter);
-		String[] toReturn = new String[splitted.length];
-		
-		for (int i = 0; i < splitted.length; i++) {
-			toReturn[i] = splitted[i].trim();
-		}
-		
-		return toReturn;
 	}
 
 }
