@@ -18,6 +18,9 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Properties;
+
+import oracle.jdbc.driver.OracleDriver;
 
 public class InsertCSV {
 
@@ -46,20 +49,33 @@ public class InsertCSV {
 
 		PARSED_PATH = parsedPath;
 
+		// DB2017_G21@//diassrv2.epfl.ch:1521/orcldias
+		
 		try {
+			/*
 			// STEP 2: Register JDBC driver
 			Class.forName(JDBC_DRIVER);
 
 			// STEP 3: Open a connection
 			System.out.println("Connecting to database...");
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-
+			*/
+			
+			Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
+			
+			String s1 = "jdbc:oracle:thin:@//diassrv2.epf.ch:1512/orcldias";
+			String s2 = "DB2017_G21";
+			conn = DriverManager.getConnection(s1, s2, s2);
+			System.out.println("OK");
+			
 		} catch (SQLException se) {
-			// Handle errors for JDBC
+			System.err.println("Handle errors for JDBC");
 			se.printStackTrace();
+			System.exit(40);
 		} catch (Exception e) {
-			// Handle errors for Class.forName
+			System.err.println("Handle errors for Class.forName");
 			e.printStackTrace();
+			System.exit(41);
 		}
 
 		tableDone = new HashSet<>();
