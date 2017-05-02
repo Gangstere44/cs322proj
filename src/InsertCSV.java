@@ -31,17 +31,22 @@ public class InsertCSV {
 	private final String PARSED_PATH;
 	private final String INPUT_FILE_TYPE = ".csv";
 
+	/*
 	private final String DB_NAME = "IntroDBProject";
 
 	// Database credentials
 	private final String USER = "root";
 	private final String PASS = "1234";
 
+	
 	// JDBC driver name and database URL
 	private final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 	private final String DB_URL = "jdbc:mysql://localhost/" + DB_NAME;
+	*/
+	
+	private final String DB_NAME = "DB2017_G21";
 
-	private final int amountDataInOneTime = 10000;
+	private final int amountDataInOneTime = 1000;
 
 	private Connection conn;
 
@@ -60,13 +65,15 @@ public class InsertCSV {
 			System.out.println("Connecting to database...");
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
 			*/
-			
-			Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
-			
-			String s1 = "jdbc:oracle:thin:@//diassrv2.epf.ch:1512/orcldias";
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+
+			String s1 = "jdbc:oracle:thin:@//diassrv2.epfl.ch:1521/orcldias.epfl.ch";
 			String s2 = "DB2017_G21";
-			conn = DriverManager.getConnection(s1, s2, s2);
-			System.out.println("OK");
+			
+			Properties p = new Properties();
+			p.setProperty("user", s2);
+			p.setProperty("password", s2);
+			conn = DriverManager.getConnection(s1, p);
 			
 		} catch (SQLException se) {
 			System.err.println("Handle errors for JDBC");
@@ -125,10 +132,10 @@ public class InsertCSV {
 
 	public void insertCSV() {
 
-		final String INT = "int";
-		final String VARCHAR = "varchar";
-		final String DATE = "date";
-		final String REAL = "real";
+		final String INT = "NUMBER";
+		final String VARCHAR = "VARCHAR";
+		final String DATE = "DATE";
+		final String REAL = "NUMBER";
 
 		final String TRUE = "T";
 		final String FALSE = "F";
@@ -402,7 +409,9 @@ public class InsertCSV {
 
 		try {
 			DatabaseMetaData md = conn.getMetaData();
-			ResultSet rs = md.getTables(null, null, tableName, null);
+			
+			ResultSet rs = md.getTables(null, null, tableName.toUpperCase(), null);
+			
 			while (rs.next()) {
 				exist = true;
 			}
@@ -423,8 +432,8 @@ public class InsertCSV {
 
 	private void deleteItemsFromTableAndTable(String tableName) throws SQLException {
 		Statement stmt = conn.createStatement();
-		stmt.executeUpdate("delete from " + tableName + ";");
-		stmt.executeUpdate("drop table " + tableName + ";");
+		stmt.executeUpdate("delete from " + tableName + "");
+		stmt.executeUpdate("drop table " + tableName + "");
 		stmt.close();
 	}
 
@@ -442,7 +451,7 @@ public class InsertCSV {
 
 			query += column[i][1];
 
-			if (column[i][1].equals("varchar")) {
+			if (column[i][1].equals("VARCHAR")) {
 				query += "(" + column[i][2] + ")";
 			}
 
@@ -462,12 +471,12 @@ public class InsertCSV {
 
 		}
 
-		query += ");";
+		query += ")";
 
 		return query;
 	}
 
-	private void appendValuesSpace(StringBuilder sb, int nRow, int nCol) {
+	private void appendValuesSpaceSQL(StringBuilder sb, int nRow, int nCol) {
 
 		for (int i = 0; i < nRow; i++) {
 
@@ -486,19 +495,39 @@ public class InsertCSV {
 			sb.append(")");
 		}
 	}
+	
+	private void appendValuesSpaceOracle(StringBuilder sb, String tableName, int nRow, int nCol) {
+
+		for (int i = 0; i < nRow; i++) {
+
+			sb.append("INTO ").append(tableName).append(" VALUES ");
+
+			sb.append("(");
+			for (int j = 0; j < nCol; j++) {
+				if (j != 0) {
+					sb.append(",");
+				}
+				sb.append("?");
+			}
+
+			sb.append(")").append("\n");
+		}
+	}
 
 	private void insertTableAndData(String tableName, String[][] column, String primary, String[][] references)
 			throws IOException, SQLException {
 
 		System.out.println("Start insertion in " + tableName);
-
+		
 		if (!tableExist(tableName)) {
 			createTable(createTableQuery(tableName, column, primary, references));
 		} else {
 			deleteItemsFromTableAndTable(tableName);
 			createTable(createTableQuery(tableName, column, primary, references));
 		}
-
+		
+		System.out.println("-----> Table Creation Done");
+		
 		BufferedReader stream = new BufferedReader(
 				new InputStreamReader(new FileInputStream(PARSED_PATH + tableName + INPUT_FILE_TYPE)));
 
@@ -515,12 +544,21 @@ public class InsertCSV {
 			}
 
 			StringBuilder sqlQuery = new StringBuilder();
+			/*
 			sqlQuery.append("INSERT INTO ").append(tableName).append(" VALUES ");
-			appendValuesSpace(sqlQuery, tmp.size(), column.length);
+			appendValuesSpaceSQL(sqlQuery, tmp.size(), column.length);
 			sqlQuery.append(";");
+			*/
+			
+			sqlQuery.append("INSERT ALL").append("\n");
+			appendValuesSpaceOracle(sqlQuery, tableName, tmp.size(), column.length);
+			sqlQuery.append("SELECT * FROM dual");
+			
+		//	System.out.println(sqlQuery.toString());
 
 			PreparedStatement ps = conn.prepareStatement(sqlQuery.toString());
 
+			
 			int c = 0;
 			for (String line : tmp) {
 
@@ -529,28 +567,30 @@ public class InsertCSV {
 				for (int i = 0; i < data.length; i++) {
 
 					switch (column[i][1]) {
-					case "int":
+					case "NUMBER":
 						if (data[i].equals("NULL")) {
 							ps.setNull(++c, Types.INTEGER);
 						} else {
 							ps.setInt(++c, Integer.parseInt(data[i]));
 						}
 						break;
-					case "varchar":
+					case "VARCHAR":
 						if (data[i].equals("NULL") || data[i].length() > Integer.parseInt(column[i][2])) {
 							ps.setNull(++c, Types.VARCHAR);
 						} else {
 							ps.setString(++c, data[i]);
 						}
 						break;
-					case "real":
+						/*
+					case "NUMBER":
 						if (data[i].equals("NULL")) {
 							ps.setNull(++c, Types.FLOAT);
 						} else {
 							ps.setFloat(++c, Float.parseFloat(data[i]));
 						}
 						break;
-					case "date":
+						*/
+					case "DATE":
 						if (data[i].equals("NULL")) {
 							ps.setNull(++c, Types.DATE);
 						} else {
@@ -565,6 +605,7 @@ public class InsertCSV {
 							} else {
 								System.err.println("Unkown date format : " + data[i]);
 							}
+							System.out.println(d.toString());
 							ps.setDate(++c, d);
 						}
 						break;
@@ -573,7 +614,7 @@ public class InsertCSV {
 					}
 				}
 			}
-
+			
 			ps.executeUpdate();
 			ps.close();
 

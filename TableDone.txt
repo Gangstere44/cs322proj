@@ -1,0 +1,8 @@
+story_type
+language
+country
+series_publication_type
+artist
+characters
+editor
+genre
