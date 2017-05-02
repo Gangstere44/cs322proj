@@ -3,6 +3,6 @@ SELECT P.id, P.name FROM publisher P, country C, series s WHERE c.name = 'Danema
 SELECT S.name FROM series S, series_publication_type SPT, country C WHERE S.country_id = C.id AND C.name = 'Switzerland' AND SPT.id = S.publication_type_id AND SPT.name = 'magazine'
 SELECT COUNT(I.number) FROM issue I GROUP BY (EXTRACT year FROM I.publication_date) HAVING (EXTRACT year FROM I.on_sale_date) >= 1990
 SELECT COUNT(series) FROM indicia_publishers IP GROUP BY IP.name HAVING IP.name = 'DC Comics'
-SELECT S.title FROM story S, story_reprint SR WHERE MAX(COUNT(SR.origin_id)) AND S.id = SR.origin_id
+SELECT S.title FROM story S, story_reprint SR WHERE MAX(COUNT(SR.origin_id)) AND S.id = SR.origin_id --only finds the most reprinted, no idea how to do the 10 most
 SELECT DISTINCT A.name FROM Artist A, Story_to_Script STS, Story_to_Pencils STP, Story_to_Colors STC WHERE STS.artist_id = STP.artist_id AND STS.artist_id = STC.artist_id GROUP BY story_id
-SELECT S.* FROM story S, story_to_characters STC, story_reprint SR, character C, story_to_feature STF WHERE (S.id NOT IN SR.origin_id) AND C.name = 'Batman' AND C.id = STC.character_id AND (C.id NOT IN STF.feature_id)
+SELECT S.* FROM story S, story_to_characters STC, story_reprint SR, character C, story_to_feature STF WHERE (S.id NOT IN SR.origin_id) AND C.name = 'Batman' AND C.id = STC.character_id AND (C.id NOT IN STF.feature_id) --not sure
