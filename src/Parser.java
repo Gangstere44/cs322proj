@@ -17,7 +17,7 @@ public class Parser {
 	private static final String NULL = "NULL";
 
 	// New Entity tables
-	private static final String CHARACTER = "character";
+	private static final String CHARACTERS = "characters";
 	private static final String ARTIST = "artist";
 	private static final String EDITOR = "editor";
 	private static final String GENRE = "genre";
@@ -132,7 +132,7 @@ public class Parser {
 		}
 
 		// Write new entity tables
-		writeEntityTable(this.characters, CHARACTER);
+		writeEntityTable(this.characters, CHARACTERS);
 		writeEntityTable(this.artists, ARTIST);
 		writeEntityTable(this.editors, EDITOR);
 		writeEntityTable(this.genres, GENRE);
