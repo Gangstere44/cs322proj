@@ -14,6 +14,7 @@ public class Main {
 	private static final String PATH_TO_PARSE = "comicsInitData/";
 	private static final String PARSED_PATH = "comicsParsedData/";
 	private static final String FILE_TYPE = ".csv";
+	private static final String PWD_FILE = "pwd.txt";
 
 	private static Connection conn;
 
@@ -97,7 +98,10 @@ public class Main {
             Class.forName("oracle.jdbc.driver.OracleDriver");
 
             String s1 = "jdbc:oracle:thin:@//diassrv2.epfl.ch:1521/orcldias.epfl.ch";
-            String s2 = "DB2017_G21";
+            String s2;
+            try (BufferedReader buffer = new BufferedReader(new FileReader(PWD_FILE))) {
+            	s2 = buffer.readLine().trim();
+            }
 
             Properties p = new Properties();
             p.setProperty("user", s2);
