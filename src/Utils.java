@@ -20,19 +20,4 @@ public class Utils {
 		return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + name + type)));
 	}
 
-	public static String runQuery(String query) {
-        //query the sql databse with the string argument
-
-	    String answer = "";
-
-	    return answer;
-	}
-
-	public static String retrievePredefinedQuery(int number) {
-	    //retrieve the query, which are all stored on the line corresponding to their number
-
-        //return it
-        return "";
-    }
-
 }
