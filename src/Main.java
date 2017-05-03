@@ -14,7 +14,7 @@ public class Main {
 	private static final String PATH_TO_PARSE = "comicsInitData/";
 	private static final String PARSED_PATH = "comicsParsedData/";
 	private static final String FILE_TYPE = ".csv";
-	private static final String PWD_FILE = "pwd.txt";
+	private static final String PWD_FILE = "src/pwd.txt";
 
 	private static Connection conn;
 
