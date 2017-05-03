@@ -50,40 +50,10 @@ public class InsertCSV {
 
 	private Connection conn;
 
-	public InsertCSV(String parsedPath) {
+	public InsertCSV(String parsedPath, Connection conn) {
 
 		PARSED_PATH = parsedPath;
-
-		// DB2017_G21@//diassrv2.epfl.ch:1521/orcldias
-		
-		try {
-			/*
-			// STEP 2: Register JDBC driver
-			Class.forName(JDBC_DRIVER);
-
-			// STEP 3: Open a connection
-			System.out.println("Connecting to database...");
-			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			*/
-			Class.forName("oracle.jdbc.driver.OracleDriver");
-
-			String s1 = "jdbc:oracle:thin:@//diassrv2.epfl.ch:1521/orcldias.epfl.ch";
-			String s2 = "DB2017_G21";
-			
-			Properties p = new Properties();
-			p.setProperty("user", s2);
-			p.setProperty("password", s2);
-			conn = DriverManager.getConnection(s1, p);
-			
-		} catch (SQLException se) {
-			System.err.println("Handle errors for JDBC");
-			se.printStackTrace();
-			System.exit(40);
-		} catch (Exception e) {
-			System.err.println("Handle errors for Class.forName");
-			e.printStackTrace();
-			System.exit(41);
-		}
+		this.conn = conn;
 
 		tableDone = new HashSet<>();
 		try {
@@ -105,12 +75,6 @@ public class InsertCSV {
 
 		insertCSV();
 
-		try {
-			conn.close();
-		} catch (SQLException e) {
-			System.err.println("Error while closing connection ");
-			e.printStackTrace();
-		}
 	}
 
 	private void launchDBWork(String tableName, String[][] column, String primary, String[][] references,
