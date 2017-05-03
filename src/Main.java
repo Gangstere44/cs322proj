@@ -1,6 +1,11 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Properties;
+import java.util.List;
 
 public class Main {
 
@@ -11,6 +16,7 @@ public class Main {
 	private static final String FILE_TYPE = ".csv";
 
 	private static Connection conn;
+
 
     public static String runQuery(String query) throws SQLException {
         //query the sql database with the string argument
@@ -23,13 +29,53 @@ public class Main {
         return answer;
 
     }
-    
 
-    public static String retrievePredefinedQuery(int number) {
-        //retrieve the query, which are all stored on the line corresponding to their number
+    /**
+     * retrieve the queries, which are all stored on the line corresponding to their number. Now simply access
+     * the one you want with the corresponding index
+     *
+     * @return queries the list of all the predefined queries
+     */
+    private static List<String> parsePredefinedQueries() throws IOException {
+        //retrieve the queries, which are all stored on the line corresponding to their number. Now simply access
+        //the one you want wit
+        //returns NULL if not all the queries have been
+        List<String> queries = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(new File("predefined_queries.txt")))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (!queries.add(line)) {
+                    throw new IOException("The line in predefined_queries.txt could not be read.");
+                }
+            }
+        }
 
-        //return it
-        return "";
+        return queries;
+
+    }
+
+    /**
+     * Uses the runQuery() and parsePredefinedQueries() to compute the list of answers of all the
+     * predefined queries
+     *
+     * @return a list containing all the answers to all the predefined queries
+     */
+    public static List<String> allPredefinedQueriesAnswers() {
+
+        List<String> answers = new ArrayList<>();
+
+        try {
+            List<String> queries = parsePredefinedQueries();
+
+            for (String query : queries) {
+                answers.add(runQuery(query));
+            }
+        } catch (Exception e) {
+            System.err.println("Error while creating the set of done table");
+            e.printStackTrace();
+        }
+
+        return answers;
     }
 	
 	public static void main(String[] args) throws IOException {
