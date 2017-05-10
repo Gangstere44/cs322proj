@@ -220,12 +220,12 @@ public class InsertCSV {
 		final String[][] argsSer = { { "id", INT, null, FALSE }, { "name", VARCHAR, N_100, FALSE },
 				{ "format", VARCHAR, N_100, FALSE }, { "year_began", DATE, null, FALSE },
 				{ "year_ended", DATE, null, FALSE }, { "publication_dates", VARCHAR, N_1000, FALSE },
-				{ "first_issue_id", INT, null, TRUE }, { "last_issue_id", INT, null, FALSE },
+				{ "first_issue_id", INT, null, FALSE }, { "last_issue_id", INT, null, FALSE },
 				{ "publisher_id", INT, null, TRUE }, { "country_id", INT, null, TRUE },
 				{ "language_id", INT, null, TRUE }, { "notes", VARCHAR, N_100, FALSE },
 				{ "color", VARCHAR, N_100, FALSE }, { "dimensions", VARCHAR, N_100, FALSE },
 				{ "paper_stock", VARCHAR, N_100, FALSE }, { "bidning", VARCHAR, N_100, FALSE },
-				{ "publishing_format", VARCHAR, N_100, FALSE }, { "publication_type_id", INT, null, TRUE } };
+				{ "publishing_format", VARCHAR, N_100, FALSE }, { "publication_type_id", INT, null, FALSE } };
 		final String primarySer = "id";
 		final String[][] refSer = { { "first_issue_id", "issue", "id" }, { "last_issue_id", "issue", "id" },
 				{ "publisher_id", "publisher", "id" }, { "country_id", "country", "id" },
@@ -238,7 +238,7 @@ public class InsertCSV {
 		/* issue */
 		final String issue = "issue";
 		final String[][] argsIss = { { "id", INT, null, FALSE }, { "number", INT, null, FALSE },
-				{ "indici_publisher_id", INT, null, TRUE }, { "publication_date", DATE, null, FALSE },
+				{ "indicia_publisher_id", INT, null, FALSE }, { "publication_date", DATE, null, FALSE },
 				{ "price", REAL, null, FALSE }, { "page_count", INT, null, FALSE },
 				{ "indicia_frequency", INT, null, FALSE }, { "notes", VARCHAR, N_100, FALSE },
 				{ "isbn", INT, null, FALSE }, { "valid_isbn", INT, null, FALSE }, { "barcode", INT, null, FALSE },
@@ -285,7 +285,7 @@ public class InsertCSV {
 
 		launchDBWork(story, argsStory, primaryStory, refStory, doneTableFile);
 
-		/* sotry_reprint */
+		/* story_reprint */
 		final String storyRe = "story_reprint";
 		final String[][] argsSR = { { "id", INT, null, FALSE }, { "origin_id", INT, null, TRUE },
 				{ "target_id", INT, null, TRUE } };
