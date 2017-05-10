@@ -20,8 +20,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 
-import oracle.jdbc.driver.OracleDriver;
-
 public class InsertCSV {
 
 	private final String TABLE_DONE_FILE = "TableDone.txt";
@@ -32,27 +30,55 @@ public class InsertCSV {
 	private final String INPUT_FILE_TYPE = ".csv";
 
 	/*
-	private final String DB_NAME = "IntroDBProject";
+	 * private final String DB_NAME = "IntroDBProject";
+	 * 
+	 * // Database credentials private final String USER = "root"; private final
+	 * String PASS = "1234";
+	 * 
+	 * 
+	 * // JDBC driver name and database URL private final String JDBC_DRIVER =
+	 * "com.mysql.jdbc.Driver"; private final String DB_URL =
+	 * "jdbc:mysql://localhost/" + DB_NAME;
+	 */
 
-	// Database credentials
-	private final String USER = "root";
-	private final String PASS = "1234";
-
-	
-	// JDBC driver name and database URL
-	private final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-	private final String DB_URL = "jdbc:mysql://localhost/" + DB_NAME;
-	*/
-	
 	private final String DB_NAME = "DB2017_G21";
 
-	private final int amountDataInOneTime = 1000;
+	private final int amountDataInOneTime = 10000;
 
 	private Connection conn;
 
 	public InsertCSV(String parsedPath, Connection conn) {
 
 		PARSED_PATH = parsedPath;
+
+		try {
+			/*
+			 * // STEP 2: Register JDBC driver Class.forName(JDBC_DRIVER);
+			 * 
+			 * // STEP 3: Open a connection
+			 * System.out.println("Connecting to database..."); conn =
+			 * DriverManager.getConnection(DB_URL, USER, PASS);
+			 */
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+
+			String s1 = "jdbc:oracle:thin:@//diassrv2.epfl.ch:1521/orcldias.epfl.ch";
+			String s2 = "DB2017_G21";
+
+			Properties p = new Properties();
+			p.setProperty("user", s2);
+			p.setProperty("password", s2);
+			conn = DriverManager.getConnection(s1, p);
+
+		} catch (SQLException se) {
+			System.err.println("Handle errors for JDBC");
+			se.printStackTrace();
+			System.exit(40);
+		} catch (Exception e) {
+			System.err.println("Handle errors for Class.forName");
+			e.printStackTrace();
+			System.exit(41);
+		}
+
 		this.conn = conn;
 
 		tableDone = new HashSet<>();
@@ -373,9 +399,9 @@ public class InsertCSV {
 
 		try {
 			DatabaseMetaData md = conn.getMetaData();
-			
+
 			ResultSet rs = md.getTables(null, null, tableName.toUpperCase(), null);
-			
+
 			while (rs.next()) {
 				exist = true;
 			}
@@ -459,7 +485,7 @@ public class InsertCSV {
 			sb.append(")");
 		}
 	}
-	
+
 	private void appendValuesSpaceOracle(StringBuilder sb, String tableName, int nRow, int nCol) {
 
 		for (int i = 0; i < nRow; i++) {
@@ -482,16 +508,18 @@ public class InsertCSV {
 			throws IOException, SQLException {
 
 		System.out.println("Start insertion in " + tableName);
-		
+
+		System.out.println(createTableQuery(tableName, column, primary, references));
+
 		if (!tableExist(tableName)) {
 			createTable(createTableQuery(tableName, column, primary, references));
 		} else {
 			deleteItemsFromTableAndTable(tableName);
 			createTable(createTableQuery(tableName, column, primary, references));
 		}
-		
+
 		System.out.println("-----> Table Creation Done");
-		
+
 		BufferedReader stream = new BufferedReader(
 				new InputStreamReader(new FileInputStream(PARSED_PATH + tableName + INPUT_FILE_TYPE)));
 
@@ -509,20 +537,19 @@ public class InsertCSV {
 
 			StringBuilder sqlQuery = new StringBuilder();
 			/*
-			sqlQuery.append("INSERT INTO ").append(tableName).append(" VALUES ");
-			appendValuesSpaceSQL(sqlQuery, tmp.size(), column.length);
-			sqlQuery.append(";");
-			*/
-			
+			 * sqlQuery.append("INSERT INTO ").append(tableName).
+			 * append(" VALUES "); appendValuesSpaceSQL(sqlQuery, tmp.size(),
+			 * column.length); sqlQuery.append(";");
+			 */
+
 			sqlQuery.append("INSERT ALL").append("\n");
 			appendValuesSpaceOracle(sqlQuery, tableName, tmp.size(), column.length);
 			sqlQuery.append("SELECT * FROM dual");
-			
-		//	System.out.println(sqlQuery.toString());
+
+			// System.out.println(sqlQuery.toString());
 
 			PreparedStatement ps = conn.prepareStatement(sqlQuery.toString());
 
-			
 			int c = 0;
 			for (String line : tmp) {
 
@@ -532,10 +559,23 @@ public class InsertCSV {
 
 					switch (column[i][1]) {
 					case "NUMBER":
-						if (data[i].equals("NULL")) {
+						if (data[i].equals("NULL") || data[i].contains("none") || data[i].contains("None")
+								|| data[i].contains("[") || data[i].contains("nn")) {
 							ps.setNull(++c, Types.INTEGER);
+						} else if (data[i].contains("FREE")) {
+							ps.setFloat(++c, (float) 0.0);
 						} else {
-							ps.setInt(++c, Integer.parseInt(data[i]));
+							try {
+								c = c + 1;
+								ps.setInt(c, Integer.parseInt(data[i]));
+							} catch (NumberFormatException e1) {
+
+								try {
+									ps.setFloat(c, Float.parseFloat(data[i]));
+								} catch (Exception e2) {
+									ps.setNull(c, Types.INTEGER);
+								}
+							}
 						}
 						break;
 					case "VARCHAR":
@@ -545,21 +585,26 @@ public class InsertCSV {
 							ps.setString(++c, data[i]);
 						}
 						break;
-						/*
-					case "NUMBER":
-						if (data[i].equals("NULL")) {
-							ps.setNull(++c, Types.FLOAT);
-						} else {
-							ps.setFloat(++c, Float.parseFloat(data[i]));
-						}
-						break;
-						*/
+					/*
+					 * case "NUMBER": if (data[i].equals("NULL")) {
+					 * ps.setNull(++c, Types.FLOAT); } else { ps.setFloat(++c,
+					 * Float.parseFloat(data[i])); } break;
+					 */
 					case "DATE":
-						if (data[i].equals("NULL")) {
-							ps.setNull(++c, Types.DATE);
-						} else {
-							String[] tmpDateData = data[i].split(" ");
-							Date d = null;
+						/*
+						 * if (data[i].equals("NULL") || data[i].contains("["))
+						 * { ps.setNull(++c, Types.DATE); break; } else {
+						 */
+						String[] tmpDateData = data[i].split(" ");
+						Date d = null;
+						/*
+						 * if (tmpDateData.length == 1 && !data[i].contains("-")
+						 * && Integer.parseInt(tmpDateData[0]) > 2030) {
+						 * ps.setNull(++c, Types.DATE); break; } else
+						 * if(tmpDateData.length == 1 && data[i].contains("-"))
+						 * { ps.setDate(++c, Date.valueOf(data[i])); break; }
+						 */
+						try {
 							if (tmpDateData.length == 1) {
 								d = new Date(Date.parse("1 January " + tmpDateData[0]));
 							} else if (tmpDateData.length == 2) {
@@ -569,8 +614,9 @@ public class InsertCSV {
 							} else {
 								System.err.println("Unkown date format : " + data[i]);
 							}
-							System.out.println(d.toString());
 							ps.setDate(++c, d);
+						} catch (Exception e) {
+							ps.setNull(++c, Types.DATE);
 						}
 						break;
 					default:
@@ -578,9 +624,15 @@ public class InsertCSV {
 					}
 				}
 			}
+
+			System.out.println("--> launch on oracle ...");
+
+			long start = System.currentTimeMillis();
 			
 			ps.executeUpdate();
 			ps.close();
+
+			System.out.println("----> done on oracle : " + ((System.currentTimeMillis() - start) / 1000) + " ms");
 
 			lineCount += tmp.size();
 			System.out.println("** Tot. inserted : " + lineCount);
