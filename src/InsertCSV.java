@@ -47,7 +47,7 @@ public class InsertCSV {
 
 	private Connection conn;
 
-	public InsertCSV(String parsedPath) {
+	public InsertCSV(String parsedPath, Connection conn) {
 
 		PARSED_PATH = parsedPath;
 
@@ -79,6 +79,8 @@ public class InsertCSV {
 			System.exit(41);
 		}
 
+		this.conn = conn;
+
 		tableDone = new HashSet<>();
 		try {
 			File tdf = new File(TABLE_DONE_FILE);
@@ -99,12 +101,6 @@ public class InsertCSV {
 
 		insertCSV();
 
-		try {
-			conn.close();
-		} catch (SQLException e) {
-			System.err.println("Error while closing connection ");
-			e.printStackTrace();
-		}
 	}
 
 	private void launchDBWork(String tableName, String[][] column, String primary, String[][] references,
