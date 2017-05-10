@@ -16,7 +16,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 
@@ -250,7 +249,7 @@ public class InsertCSV {
 				{ "publisher_id", INT, null, TRUE }, { "country_id", INT, null, TRUE },
 				{ "language_id", INT, null, TRUE }, { "notes", VARCHAR, N_100, FALSE },
 				{ "color", VARCHAR, N_100, FALSE }, { "dimensions", VARCHAR, N_100, FALSE },
-				{ "paper_stock", VARCHAR, N_100, FALSE }, { "bidning", VARCHAR, N_100, FALSE },
+				{ "paper_stock", VARCHAR, N_100, FALSE }, { "binding", VARCHAR, N_100, FALSE },
 				{ "publishing_format", VARCHAR, N_100, FALSE }, { "publication_type_id", INT, null, FALSE } };
 		final String primarySer = "id";
 		final String[][] refSer = { { "first_issue_id", "issue", "id" }, { "last_issue_id", "issue", "id" },

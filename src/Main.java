@@ -81,22 +81,11 @@ public class Main {
         return answers;
     }
 	
-	public static void main(String[] args) throws IOException {
-
-		System.out.println("----- Start parsing -----");
-		new Parser(PATH_TO_PARSE, PARSED_PATH, FILE_TYPE).parse();
+	public static void main(String[] args) throws IOException, SQLException {
 
         // Connection management
         // DB2017_G21@//diassrv2.epfl.ch:1521/orcldias
         try {
-			/*
-			// STEP 2: Register JDBC driver
-			Class.forName(JDBC_DRIVER);
-
-			// STEP 3: Open a connection
-			System.out.println("Connecting to database...");
-			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			*/
             Class.forName("oracle.jdbc.driver.OracleDriver");
 
             String s1 = "jdbc:oracle:thin:@//diassrv2.epfl.ch:1521/orcldias.epfl.ch";
@@ -119,11 +108,12 @@ public class Main {
             e.printStackTrace();
             System.exit(41);
         }
+        
+        System.out.println("----- Start parsing -----");
+		new Parser(PATH_TO_PARSE, PARSED_PATH, FILE_TYPE, conn).parse();
 
 		
-		System.out.println("----- Start inserting -----");
-
-		new InsertCSV(PARSED_PATH, conn);
+		System.out.println("----- End parsing -----");
 
         //Closing connection management
         try {
@@ -132,11 +122,5 @@ public class Main {
             System.err.println("Error while closing connection ");
             e.printStackTrace();
         }
-		
-/*
-		System.out.println("Done");
-		System.out.println(new Date(Date.parse(" 1 January 1998")).toString());
-*/	}
-	
-	
+	}
 }
