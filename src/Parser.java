@@ -691,7 +691,7 @@ public class Parser {
 			List<String> headers = new ArrayList<>();
 			String line;
 			while ((line = br.readLine()) != null) {
-				String[] allData = Utils.splitAndTrim(line.replace("\"", ""), ",");
+				String[] allData = Utils.splitAndTrim(line.replace("\"", "").replace("'", ""), ",");
 				if (isHeader) {
 					// Header
 					headers = Arrays.asList(allData);
