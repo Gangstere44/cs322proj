@@ -210,6 +210,7 @@ public class Parser {
 		// Secondly, we need to change the columns supposed to be a date in the file 'issue'
 		// into Integers representing the year (easier than playing with dates)
 		// + change column 'number' to 'num'
+		// + change price into number only (0.05 USD -> 0.05)
 		
 		File issue = new File(this.pathToParse + "issue" + this.fileType);
 		tmp = new File(this.pathToParse + "issue-tmp" + this.fileType);
@@ -265,6 +266,15 @@ public class Parser {
 								}
 								
 								newIssueWriter.write(delimiter + year);
+							}
+							else if (header.equals("price")) {
+								String[] splittedData = data.split("\\s+");
+								if (splittedData.length > 0) {
+									newIssueWriter.write(delimiter + splittedData[0]);
+								}
+								else {
+									newIssueWriter.write(delimiter + data);
+								}
 							}
 							else {
 								newIssueWriter.write(delimiter + data);
@@ -793,12 +803,13 @@ public class Parser {
 		System.out.println(query);
 		System.out.println();
 		
+		/*
 		if (query.trim().length() > 0) {
 			Statement stmt = conn.createStatement();
 			stmt.executeUpdate(query);
 			stmt.close();
 		}
-		
+		*/
 	}
 	
 	private String createTableQuery(String tableName, Map<String, ColumnInfo> headersToColumnInfo, String primary, List<Reference> references) {

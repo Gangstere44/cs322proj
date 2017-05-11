@@ -18,3 +18,5 @@ hs_err_pid*
 *.csv
 /src/pwd.txt
 /bin/
+
+/comics_server/sftp-config.json
