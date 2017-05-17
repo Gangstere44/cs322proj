@@ -705,6 +705,7 @@ public class Parser {
 					mainWriter.write('\n');
 					isHeader = false;
 				} else {
+					assert(allData.length == headers.size());
 					// Normal data
 					String delimiter = "";
 					Integer id = null;
@@ -748,20 +749,18 @@ public class Parser {
 		switch (colInfo.type) {
 		case INT:
 			try {
-				Integer.parseInt(data);
+				return Integer.parseInt(data)+"";
 			}
 			catch (NumberFormatException e) {
 				return NULL;
 			}
-			break;
 		case REAL:
 			try {
-				Double.parseDouble(data);
+				return Double.parseDouble(data)+"";
 			}
 			catch (NumberFormatException e) {
 				return NULL;
 			}
-			break;
 		case VARCHAR:
 			if (data.length() > colInfo.maxCharacters) {
 				return NULL;
