@@ -918,6 +918,7 @@ public class Parser {
 		// Add some elements (if new) to a relation and write it
 		public void addNewElements(String data, int id, ColumnInfo colInfo) throws IOException {
 			data = data.replaceAll("\\s*\\([^\\)]*\\)\\s*", "");
+			data = data.replaceAll("\\s*\\[[^\\]]*\\]\\s*", "");
 			String[] elements = Utils.splitAndTrim(data, ";");
 			for (String elem : elements) {
 				assert(colInfo.type.equals(Type.VARCHAR));
