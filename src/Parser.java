@@ -1,14 +1,15 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ public class Parser {
 	}
 
 	private static final int CURRENT_YEAR = 2017;
-	private static final String NULL = "NULL";
+	private static final String NULL = "";
 	private static final Integer DEFAULT_VARCHAR_SIZE = 100;
 	// Default number of digits for decimals
 	private static final int DEFAULT_DECIMAL_SCALE = 2;
@@ -211,6 +212,8 @@ public class Parser {
 			}
 		}
 		
+		newSeriesWriter.close();
+		
 		// Secondly, we need to change the columns supposed to be a date in the file 'issue'
 		// into Integers representing the year (easier than playing with dates)
 		// + change column 'number' to 'num'
@@ -290,6 +293,8 @@ public class Parser {
 				}
 			}
 		}
+		
+		newIssueWriter.close();
 		
 		for (File file : filesToParse) {
 
@@ -690,7 +695,7 @@ public class Parser {
 		BufferedWriter mainWriter = newWriter(name.split("-")[0]);
 
 		try (BufferedReader br = new BufferedReader(
-				new FileReader(new File(this.pathToParse + name + this.fileType)))) {
+				new InputStreamReader(new FileInputStream(this.pathToParse + name + this.fileType)))) {
 			boolean isHeader = true;
 			List<String> headers = new ArrayList<>();
 			String line;
@@ -716,7 +721,7 @@ public class Parser {
 					for (int i = 0; i < allData.length; i++) {
 						String header = headers.get(i);
 						NewRelationInfo newRelationInfo = headersToNewRelations.get(header);
-						String data = allData[i];
+						String data = escapeForbiddenCharacters(allData[i]);
 						if (data.length() == 0 && newRelationInfo == null) {
 							mainWriter.write(delimiter + NULL);
 							delimiter = ",";
@@ -747,6 +752,16 @@ public class Parser {
 		for (NewRelationInfo newRelationInfo : headersToNewRelations.values()) {
 			newRelationInfo.writer.close();
 		}
+	}
+
+	private String escapeForbiddenCharacters(String input) {
+		char[] tab = {'?', '&', '\\', '~', '|', '$', '!', '>', '*', '%', '_'};
+		
+		for (char c : tab) {
+			input = input.replace(c+"", "\\" + c);
+		}
+		
+		return input;
 	}
 
 	private String sanitizeData(String data, ColumnInfo colInfo) {
