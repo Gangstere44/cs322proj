@@ -84,20 +84,6 @@ public class Main {
 	
 	public static void main(String[] args) throws IOException, SQLException {
 		
-		/*
-		try (BufferedReader br = new BufferedReader(
-				new InputStreamReader(new FileInputStream("comicsInitData/issue.csv")))) {
-			String line;
-			int nb = 0;
-			while ((line = br.readLine()) != null) {
-				if (nb >= 1400000) {
-					System.out.println(line);
-				}
-				nb++;
-			}
-		}
-		*/
-
         // Connection management
         // DB2017_G21@//diassrv2.epfl.ch:1521/orcldias
         try {
