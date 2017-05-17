@@ -147,6 +147,10 @@ public class Parser {
 						String data = allData[i];
 						if (data.length() == 0) {
 							newSeriesWriter.write(delimiter);
+							delimiter = ",";
+							if (header.equals("publication_dates")) {
+								newSeriesWriter.write(delimiter);
+							}
 						}
 						else {
 							if (header.equals("publication_dates")) {
