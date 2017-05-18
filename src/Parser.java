@@ -13,8 +13,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Parser {
 	
@@ -920,7 +922,12 @@ public class Parser {
 			data = data.replaceAll("\\s*\\([^\\)]*\\)\\s*", "");
 			data = data.replaceAll("\\s*\\[[^\\]]*\\]\\s*", "");
 			String[] elements = Utils.splitAndTrim(data, ";");
+			Set<String> cleanElements = new HashSet<>();
 			for (String elem : elements) {
+				cleanElements.add(elem);
+			}
+			
+			for (String elem : cleanElements) {
 				assert(colInfo.type.equals(Type.VARCHAR));
 				if (elem.length() > 0 && (colInfo == null || elem.length() <= colInfo.maxCharacters)) {
 					Integer relationId;
