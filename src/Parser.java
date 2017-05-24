@@ -554,12 +554,12 @@ public class Parser {
 		references = new ArrayList<>();
 		
 		headersToColumnInfo.put("story_id", new ColumnInfo(Type.INT, null, false));
-		headersToColumnInfo.put("artist_id", new ColumnInfo(Type.INT, null, false));
+		headersToColumnInfo.put("character_id", new ColumnInfo(Type.INT, null, false));
 		
 		references.add(new Reference("story_id", "story", "id"));
-		references.add(new Reference("artist_id", ARTIST, "id"));
+		references.add(new Reference("character_id", CHARACTERS, "id"));
 		
-		createTable(createTableQuery(STORY_TO_FEATURE, headersToColumnInfo, "story_id,artist_id", references));
+		createTable(createTableQuery(STORY_TO_FEATURE, headersToColumnInfo, "story_id,character_id", references));
 		
 		// story_to_script
 		headersToColumnInfo = new HashMap<>();
