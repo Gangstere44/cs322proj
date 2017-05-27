@@ -1,0 +1,453 @@
+Milestone 3
+------------
+
+a) Print the series names that have the highest number of issues which contain a story whose type (e.g., cartoon) is not the one occurring most frequently in the database (e.g, illustration).
+
+res1 =
+	SELECT type_id
+	FROM story
+	GROUP BY type_id
+	ORDER BY COUNT(type_id) DESC
+	FETCH FIRST 1 ROWS ONLY;
+--> to get the type_id occurring the most frequently in the DB
+
+res2 =
+	SELECT DISTINCT issue_id
+	FROM story
+	WHERE type_id NOT IN (res1);
+--> to get all issue_ids of stories that are not of the type of the most frequent type in the DB
+
+res3 =
+	SELECT series_id
+	FROM issue_in_series
+	WHERE issue_id IN (res2) 
+	GROUP BY series_id 
+	ORDER BY COUNT(issue_id) DESC 
+	FETCH FIRST 1 ROWS WITH TIES;
+--> to get all series_id (probably only one) with the most issues which contain a story that is not of the most frequent type in the DB
+
+answer =
+	SELECT name
+	FROM series
+	WHERE id IN (res3);
+
+-------------------------------------------------
+
+b) Print the names of publishers who have series with all series types.
+
+-- get all publisher_ids that have published all types of series
+res1 =
+	SELECT publisher_id
+	FROM series
+	WHERE publication_type_id IS NOT NULL
+	GROUP BY publisher_id
+	HAVING
+		COUNT(DISTINCT publication_type_id) = (SELECT COUNT(*) FROM series_publication_type);
+
+-- answer
+answer =
+	SELECT name
+	FROM publisher
+	WHERE id IN (res1);
+
+-------------------------------------------------
+
+c) Print the 10 most-reprinted characters from Alan Moore's stories.
+
+res1 =
+	SELECT id
+	FROM artist
+	WHERE UPPER(name) = UPPER('Alan Moore');
+--> get id of Alan Moore (artist)
+
+res2 =
+	SELECT story_id
+	FROM story_to_script
+	WHERE artist_id = (res1);
+--> get all story ids that Alan Moore wrote
+
+res3 = 
+	SELECT target_id
+	FROM story_reprint
+	WHERE target_id IN (res2);
+--> get all reprinted story ids that Alan Moore wrote
+
+res4 =
+	SELECT character_id
+	FROM story_to_characters
+	WHERE story_id IN (res3)
+	GROUP BY character_id
+	ORDER BY COUNT(*) DESC
+	FETCH FIRST 10 ROWS ONLY;
+--> get the top 10 character ids present in the reprinted stories of Alan Moore
+
+answer =
+	SELECT name
+	FROM characters
+	WHERE id IN (res4);
+
+-------------------------------------------------
+
+d) Print the writers of nature-related stories that have also done the pencilwork in all their nature-related stories.
+
+res 1 =
+	SELECT id
+	FROM genre
+	WHERE UPPER(name) = UPPER('nature');
+--> get all nature-related genre ids
+
+res2 =
+	SELECT DISTINCT story_id
+	FROM story_to_genre
+	WHERE genre_id IN (res1);
+--> get all nature-related story ids and artist ids
+
+res3 = 
+	SELECT story_to_script.artist_id,
+       	story_to_pencils.artist_id AS artist_id_pencil
+	FROM
+	  (res2) useful_stories
+	INNER JOIN story_to_script ON story_to_script.story_id = useful_stories.story_id
+	LEFT JOIN story_to_pencils ON story_to_pencils.story_id = useful_stories.story_id
+	AND story_to_pencils.artist_id = story_to_script.artist_id
+	GROUP BY story_to_script.artist_id,
+	         story_to_pencils.artist_id,
+	         story_to_script.story_id
+	ORDER BY story_to_script.artist_id,
+	         story_to_pencils.artist_id,
+	         story_to_script.story_id;
+--> get all writer ids for each nature-related stories and get NULL as an 'artist-pencil' if not the same than the writer, otherwise get the same id
+
+res4 = 
+	SELECT artist_id
+	FROM
+	  (res3) remaining_artists
+	GROUP BY artist_id
+	HAVING COUNT(artist_id_pencil) = COUNT(*);
+--> get all writer ids that 'penciled' all the stories they wrote
+
+SELECT name
+FROM artist
+WHERE id IN
+    (res4);
+
+
+--------------------------------------------------
+
+e) For each of the top-10 publishers in terms of published series, print the 3 most popular languages of their series.
+
+See SQL file
+
+--------------------------------------------------
+
+f) Print the languages that have more than 10000 original stories published in magazines, along with the
+number of those stories.
+
+-- all reprinted stories
+res1 = 
+	SELECT target_id
+	FROM story_reprint;
+
+-- magazine id
+res2 = 
+	SELECT id
+	FROM series_publication_type
+	WHERE UPPER(name) = UPPER('magazine');
+
+-- all magazine series ids, with correpsonding language id
+res3 =
+	SELECT id,
+	       language_id
+	FROM series
+	WHERE publication_type_id = (res2);
+
+-- all ids of issues appearing in a magazine, with correpsonding language id
+res4 = 
+	SELECT issue_id,
+	       useful_series.language_id
+	FROM issue_in_series
+	INNER JOIN (res3) useful_series ON useful_series.id = issue_in_series.series_id;
+
+-- all ids of original stories that appeared in a magazine, with correpsonding language id
+res5 = 
+	SELECT id,
+	       useful_issues.language_id
+	FROM story
+	INNER JOIN (res4) useful_issues ON useful_issues.issue_id = story.issue_id
+	WHERE id NOT IN
+	    (SELECT target_id
+	     FROM story_reprint);
+
+-- answer
+answer = 
+	SELECT
+	  (SELECT language.name
+	   FROM language
+	   WHERE useful_issues.language_id = id) AS language,
+	   COUNT(*) AS nb_orig_stories_magazine
+	FROM story
+	INNER JOIN (res4) useful_issues ON useful_issues.issue_id = story.issue_id
+	WHERE id NOT IN
+	    (SELECT target_id
+	     FROM story_reprint)
+	GROUP BY language_id
+	HAVING COUNT(*) > 10000;
+
+--------------------------------------------------
+
+g) Print all story types that have not been published as a part of Italian magazine series.
+
+-- magazine id
+res1 = 
+	SELECT id
+	FROM series_publication_type
+	WHERE UPPER(name) = UPPER('magazine');
+
+-- italy id
+res2 = 
+	SELECT id
+	FROM country
+	WHERE UPPER(name) = UPPER('italy');
+
+-- all italian magazine series ids
+res3 = 
+	SELECT id
+	FROM series
+	WHERE publication_type_id = (res1)
+	AND country_id = (res2);
+     
+-- all ids of issues appearing in an italian magazine
+res4 = 
+	SELECT issue_id
+	FROM issue_in_series
+	INNER JOIN (res3) useful_series ON useful_series.id = issue_in_series.series_id AND issue_in_series.issue_id < 100;
+      
+-- all story types of stories appearing in italian magazines
+res5 = 
+	SELECT DISTINCT type_id
+	FROM story
+	INNER JOIN (res4) useful_issues ON useful_issues.issue_id = story.issue_id;
+      
+-- answer but way slower than the next one (why?) -> 3 sec
+slow_answer =
+	SELECT name
+	FROM story_type
+	WHERE id NOT IN (res5);
+
+-- true answer (faster) -> 0.8 sec
+fast_answer = 
+	SELECT name
+	FROM story_type
+	LEFT JOIN
+	  (res5) italian_story_types ON italian_story_types.type_id = story_type.id
+	WHERE italian_story_types.type_id IS NULL; 
+
+--------------------------------------------------
+
+h) Print the writers of cartoon stories who have worked as writers for more than one indicia publisher.
+
+-- cartoon id
+res1 = 
+	SELECT id
+	FROM story_type
+	WHERE UPPER(name) = UPPER('cartoon');
+
+-- all cartoons
+res2 =
+	SELECT id
+	FROM story
+	WHERE type_id = (res1);
+
+-- story and issues ids of all cartoons
+res3 = 
+	SELECT id, issue_id
+	FROM story
+	WHERE type_id =
+		(res1);
+
+-- all artist ids and ids of indicia publishers which they have already worked for
+res4 =
+	SELECT DISTINCT story_to_script.artist_id, issue.indicia_publisher_id
+	FROM (res3) cartoons 
+	INNER JOIN issue ON issue.id = cartoons.issue_id AND issue.indicia_publisher_id IS NOT NULL
+	INNER JOIN story_to_script ON story_to_script.story_id = cartoons.id;
+  
+-- answer
+answer =
+	SELECT artist_id, COUNT(*) AS nb_indicia_publishers
+	FROM (res4)
+	GROUP BY artist_id
+	HAVING COUNT(*) > 1;
+
+--------------------------------------------------
+
+i) Print the 10 brand groups with the highest number of indicia publishers.
+
+-- indicia publisher and brand group ids having the same publisher
+-- DISTINCT is needed because it is possible that there are some brand groups
+-- having the same name and being linked to the same publisher id
+res1 =
+	SELECT DISTINCT indicia_publisher.id AS indicica_publisher_id, brand_group.name AS brand_group_name
+	FROM indicia_publisher
+	INNER JOIN brand_group ON indicia_publisher.publisher_id = brand_group.publisher_id;
+
+-- answer
+answer =
+	SELECT brand_group_name
+	FROM (res1)
+	GROUP BY brand_group_name
+	ORDER BY COUNT(*) DESC
+	FETCH FIRST 10 ROWS ONLY;
+
+--------------------------------------------------
+
+j) Print the average series length (in terms of years) per indicia publisher.
+
+-- each indicia publisher with the length of the series they published
+res1 = 
+	SELECT indicia_publisher.name,
+	       (series.publication_dates_to_year - series.publication_dates_from_year) AS series_length
+	FROM series
+	INNER JOIN indicia_publisher ON series.publisher_id = indicia_publisher.publisher_id
+	AND series.publication_dates_to_year IS NOT NULL
+	AND series.publication_dates_from_year IS NOT NULL;
+
+-- answer
+answer =
+	SELECT indicia_series_length.name,
+	       AVG(indicia_series_length.series_length) AS average_series_length
+	FROM (res1) indicia_series_length
+	GROUP BY indicia_series_length.name;
+
+--------------------------------------------------
+
+k) Print the top 10 indicia publishers that have published the most single-issue series.
+
+-- single-issue series ids
+res1 =
+	SELECT series_id
+	FROM issue_in_series
+	GROUP BY series_id
+	HAVING COUNT(*) = 1;
+
+-- answer
+answer =
+	SELECT indicia_publisher.name,
+	       COUNT(*)
+	FROM series
+	INNER JOIN (res1) single_issue_series ON single_issue_series.series_id = series.id
+	INNER JOIN indicia_publisher ON indicia_publisher.publisher_id = series.publisher_id
+	GROUP BY indicia_publisher.name
+	ORDER BY COUNT(*) DESC FETCH FIRST 10 ROWS ONLY;
+
+--------------------------------------------------
+
+l) Print the 10 indicia publishers with the highest number of script writers in a single story.
+
+-- every story id with its number of writers
+res1 =
+	SELECT story_id, COUNT(*) AS nb_writers
+	FROM story_to_script
+	GROUP BY story_id;
+
+-- answer with ids
+res2 =
+	SELECT issue.indicia_publisher_id
+	FROM story
+	INNER JOIN (res1) story_to_nb_writers ON story_to_nb_writers.story_id = story.id
+	INNER JOIN issue ON issue.id = story.issue_id AND issue.indicia_publisher_id IS NOT NULL
+	GROUP BY issue.indicia_publisher_id
+	ORDER BY MAX(story_to_nb_writers.nb_writers) DESC
+	FETCH FIRST 10 ROWS ONLY;
+
+-- answer (3.5 sec!)
+answer = 
+	SELECT name
+	FROM indicia_publisher
+	WHERE id IN (res2);
+
+--------------------------------------------------
+
+m) Print all Marvel heroes that appear in Marvel-DC story crossovers.
+
+-- ids of publishers of crossovers
+res1 = 
+	SELECT id
+	FROM publisher
+	WHERE UPPER(name) = UPPER('DC / Marvel') OR UPPER(name) = UPPER('Marvel / DC');
+
+-- id of Marvel publisher
+res2 =
+	SELECT id
+	FROM publisher
+	WHERE UPPER(name) = UPPER('Marvel');
+
+-- ids of indicia publishers that published story crossovers
+res3 =
+	SELECT id
+	FROM indicia_publisher
+	WHERE publisher_id IN (res1);
+  
+-- ids of Marvel indicia publishers
+res4 =
+	SELECT id
+	FROM indicia_publisher
+	WHERE publisher_id IN (res2);
+
+-- answer
+answer =
+	SELECT DISTINCT characters.name
+	FROM issue
+	INNER JOIN (res3) indicia_crossover ON indicia_crossover.id = issue.indicia_publisher_id
+	INNER JOIN story ON story.issue_id = issue.id
+	INNER JOIN story_to_characters ON story.id = story_to_characters.story_id
+	INNER JOIN characters ON characters.id = story_to_characters.character_id
+	INTERSECT
+	SELECT DISTINCT characters.name
+	FROM issue
+	INNER JOIN (res4) indicia_crossover ON indicia_crossover.id = issue.indicia_publisher_id
+	INNER JOIN story ON story.issue_id = issue.id
+	INNER JOIN story_to_characters ON story.id = story_to_characters.story_id
+	INNER JOIN characters ON characters.id = story_to_characters.character_id;
+
+--------------------------------------------------
+
+n) Print the top 5 series with most issues
+
+-- answer (0.8 sec, seems it can be faster with index on series.name??)
+SELECT name
+FROM issue_in_series
+INNER JOIN series ON series.id = issue_in_series.series_id
+GROUP BY name
+ORDER BY COUNT(*) DESC
+FETCH FIRST 5 ROWS ONLY;
+
+-- answer (0.4 sec, seems quite fast, but cost of plan is veeerrryyy high, why?)
+SELECT 
+  (SELECT name
+  FROM series
+  WHERE series.id = series_id)
+FROM issue_in_series
+GROUP BY series_id
+ORDER BY COUNT(*) DESC
+FETCH FIRST 5 ROWS ONLY;
+
+--------------------------------------------------
+
+o) Given an issue, print its most reprinted story.
+
+-- answer with id + title
+res1 =
+	SELECT origin_id, story.title
+	FROM story
+	INNER JOIN story_reprint ON story.id = story_reprint.origin_id AND story.issue_id = 123
+	GROUP BY origin_id, story.title
+	ORDER BY COUNT(*) DESC
+	FETCH FIRST 1 ROWS ONLY;
+
+-- answer (only title)
+SELECT title
+FROM (res1);
+
+
+
