@@ -1,2 +1,2 @@
 ﻿SELECT S.name FROM series S, story_type ST
-WHERE 
+WHERE MAX(COUNT( 
