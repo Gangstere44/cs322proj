@@ -55,4 +55,4 @@ WHERE id IN
                     FROM artist
                     WHERE UPPER(name) = UPPER('Alan Moore'))))
      GROUP BY character_id
-     ORDER BY COUNT(*) DESC FETCH FIRST 10 ROWS ONLY);
+     ORDER BY COUNT(*) DESC FETCH FIRST 1 ROWS ONLY);

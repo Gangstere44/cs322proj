@@ -4,7 +4,7 @@ FROM genre
 WHERE UPPER(name) = UPPER('nature');
 
 -- all nature-related story ids
-SELECT count(DISTINCT story_id)
+SELECT DISTINCT story_id
 FROM story_to_genre
 WHERE genre_id IN
     (SELECT id
