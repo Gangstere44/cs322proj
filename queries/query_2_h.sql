@@ -53,26 +53,26 @@ INNER JOIN story_to_feature ON story_to_feature.story_id = NR_stories.id AND cha
 SELECT DISTINCT title
 FROM story
 WHERE id IN
-  (SELECT NR_stories.id
-  FROM 
-    (SELECT id
-    FROM story
-    WHERE id NOT IN
-      (SELECT DISTINCT origin_id
-      FROM story_reprint)) NR_stories
-  INNER JOIN story_to_characters ON story_to_characters.story_id = NR_stories.id AND character_id IN
-    (SELECT id
-    FROM characters
-    WHERE UPPER(name) = UPPER('batman'))
-  MINUS
-  SELECT NR_stories.id
-  FROM 
-    (SELECT id
-    FROM story
-    WHERE id NOT IN
-      (SELECT DISTINCT origin_id
-      FROM story_reprint)) NR_stories
-  INNER JOIN story_to_feature ON story_to_feature.story_id = NR_stories.id AND character_id IN
-    (SELECT id
-    FROM characters
-    WHERE UPPER(name) = UPPER('batman')));
+    (SELECT NR_stories.id
+     FROM
+       (SELECT id
+        FROM story
+        WHERE id NOT IN
+            (SELECT DISTINCT origin_id
+             FROM story_reprint)) NR_stories
+     INNER JOIN story_to_characters ON story_to_characters.story_id = NR_stories.id
+     AND character_id IN
+       (SELECT id
+        FROM characters
+        WHERE UPPER(name) = UPPER('batman')) MINUS SELECT NR_stories.id
+     FROM
+       (SELECT id
+        FROM story
+        WHERE id NOT IN
+            (SELECT DISTINCT origin_id
+             FROM story_reprint)) NR_stories
+     INNER JOIN story_to_feature ON story_to_feature.story_id = NR_stories.id
+     AND character_id IN
+       (SELECT id
+        FROM characters
+        WHERE UPPER(name) = UPPER('batman')));

@@ -13,10 +13,12 @@ FROM indicia_publisher
 WHERE UPPER(name) LIKE UPPER('%dc comics%');
 
 -- answer
-SELECT IP.name, COUNT(*) AS nb_series
+SELECT IP.name,
+       COUNT(*) AS nb_series
 FROM series
 INNER JOIN
-  (SELECT name, publisher_id
-  FROM indicia_publisher
-  WHERE UPPER(name) LIKE UPPER('%dc comics%')) IP ON IP.publisher_id = series.publisher_id
+  (SELECT name,
+          publisher_id
+   FROM indicia_publisher
+   WHERE UPPER(name) LIKE UPPER('%dc comics%')) IP ON IP.publisher_id = series.publisher_id
 GROUP BY IP.name;

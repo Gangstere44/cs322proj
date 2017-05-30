@@ -13,12 +13,11 @@ WHERE ROWNUM <= 10;
 -- Valentin's suggestion:
 
 -- answer (but still having the 'NULL' title)
-SELECT title 
+SELECT title
 FROM
-    (SELECT SR.origin_id, COUNT(SR.target_id)
-    FROM story_reprint SR  
-    GROUP BY SR.origin_id
-    ORDER BY 2 DESC
-    FETCH FIRST 10 ROWS ONLY
-    )
+  (SELECT SR.origin_id,
+          COUNT(SR.target_id)
+   FROM story_reprint SR
+   GROUP BY SR.origin_id
+   ORDER BY 2 DESC FETCH FIRST 10 ROWS ONLY )
 INNER JOIN story ON story.id = origin_id;
