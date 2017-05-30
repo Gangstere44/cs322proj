@@ -10,7 +10,7 @@ FETCH FIRST 5 ROWS ONLY;
 SELECT 
   (SELECT name
   FROM series
-  WHERE series.id = series_id)
+  WHERE series.id = issue_in_series.series_id)
 FROM issue_in_series
 GROUP BY series_id
 ORDER BY COUNT(*) DESC

@@ -3,6 +3,8 @@ SELECT id
 FROM genre
 WHERE UPPER(name) = UPPER('nature');
 
+CREATE INDEX INDEX1 ON story_to_genre (genre_id ASC);
+
 -- all nature-related story ids
 SELECT DISTINCT story_id
 FROM story_to_genre

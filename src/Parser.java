@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -823,13 +824,11 @@ public class Parser {
 		System.out.println(query);
 		System.out.println();
 		
-		/*
 		if (query.trim().length() > 0) {
 			Statement stmt = conn.createStatement();
 			stmt.executeUpdate(query);
 			stmt.close();
 		}
-		*/
 	}
 	
 	private String createTableQuery(String tableName, Map<String, ColumnInfo> headersToColumnInfo, String primary, List<Reference> references) {

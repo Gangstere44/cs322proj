@@ -55,7 +55,6 @@ public class Main {
         }
 
         return queries;
-
     }
 
     /**
@@ -83,7 +82,6 @@ public class Main {
     }
 	
 	public static void main(String[] args) throws IOException, SQLException {
-		/*
         // Connection management
         // DB2017_G21@//diassrv2.epfl.ch:1521/orcldias
         try {
@@ -109,18 +107,19 @@ public class Main {
             e.printStackTrace();
             System.exit(41);
         }
-        */
         System.out.println("----- Start parsing -----");
-		//new Parser(PATH_TO_PARSE, PARSED_PATH, FILE_TYPE, conn).parse();
+		new Parser(PATH_TO_PARSE, PARSED_PATH, FILE_TYPE, conn).parse();
+		
+		/*
         String[] names = {"story_to_feature", "story_to_script", "story_to_pencils", "story_to_inks", "story_to_colors",
         		"story_to_letters", "story_to_editing", "story_to_genre", "story_to_characters", "issue_to_editing", "issue_in_series"};
         for (String name : names) {
         	Utils.rewriteRelationFile(new File(PARSED_PATH + name + FILE_TYPE));
         }
+        */
 
 		System.out.println("----- End parsing -----");
 
-		/*
         //Closing connection management
         try {
             conn.close();
@@ -128,6 +127,5 @@ public class Main {
             System.err.println("Error while closing connection ");
             e.printStackTrace();
         }
-        */
 	}
 }

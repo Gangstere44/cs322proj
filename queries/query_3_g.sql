@@ -3,6 +3,8 @@ SELECT id
 FROM series_publication_type
 WHERE name = 'magazine';
 
+CREATE INDEX ISSUE_ID_ON_STORY ON story (issue_id ASC);
+
 -- italy id
 SELECT id
 FROM country
@@ -49,7 +51,7 @@ INNER JOIN
       (SELECT id
       FROM country
       WHERE UPPER(name) = UPPER('italy'))) useful_series ON useful_series.id = issue_in_series.series_id) useful_issues ON useful_issues.issue_id = story.issue_id;
-      
+
 -- answer but way slower than the next one (why?)
 SELECT name
 FROM story_type

@@ -1,3 +1,5 @@
+-- Index on type_id in story was helping a little bit: 1.8 sec instead of 2.0 sec
+
 -- most freq type id
 SELECT type_id
 FROM story
